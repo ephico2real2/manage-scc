@@ -322,8 +322,8 @@ function manage_existing_sa_scc() {
     local original_scc="$3"
     local new_scc="$4"
     
-    # Check if original SCC is assigned to this service account
-    if oc get scc "$original_scc" -o yaml | grep -q "system:serviceaccount:$ns:$sa"; then
+    # Check if original SCC is assigned to this service account (both formats)
+    if oc get scc "$original_scc" -o yaml | grep -E -q "(system:serviceaccount:$ns:$sa|$sa)"; then
         # Confirm before removing the original SCC
         if confirm_action "Remove original SCC $original_scc from service account $sa?" "Y"; then
             if execute_with_confirmation "oc adm policy remove-scc-from-user $original_scc system:serviceaccount:$ns:$sa" "Removing original SCC from service account"; then
@@ -332,10 +332,10 @@ function manage_existing_sa_scc() {
                 echo "Warning: Failed to remove original SCC $original_scc from service account $sa. Continuing..."
             fi
         else
-            echo "Skipped removal of original SCC from $sa."
+            echo "Skipped of original SCC from $sa."
         fi
     else
-        echo "Original SCC $original_scc is not assigned to service account $sa. No removal needed."
+        echo "Original SCC $original_scc is not assigned to service account $sa (checked both namespaced and non-namespaced formats). No removal needed."
     fi
     
     # Confirm before assigning the new SCC
