@@ -322,20 +322,25 @@ function manage_existing_sa_scc() {
     local original_scc="$3"
     local new_scc="$4"
     
-    # Check if original SCC is assigned to this service account (both formats)
-    if oc get scc "$original_scc" -o yaml | grep -E -q "(system:serviceaccount:$ns:$sa|$sa)"; then
-        # Confirm before removing the original SCC
-        if confirm_action "Remove original SCC $original_scc from service account $sa?" "Y"; then
-            if execute_with_confirmation "oc adm policy remove-scc-from-user $original_scc system:serviceaccount:$ns:$sa" "Removing original SCC from service account"; then
-                echo "Successfully removed original SCC from $sa."
+    # Check if ClusterRoleBinding for original SCC exists
+    if oc get clusterrolebinding system:openshift:scc:$original_scc &> /dev/null; then
+        # Check if service account is in the ClusterRoleBinding
+        if oc get clusterrolebinding system:openshift:scc:$original_scc -o jsonpath='{.subjects[*]}' | grep -q "name: $sa.*namespace: $ns"; then
+            # Confirm before removing the original SCC
+            if confirm_action "Remove original SCC $original_scc from service account $sa?" "Y"; then
+                if execute_with_confirmation "oc adm policy remove-scc-from-user $original_scc system:serviceaccount:$ns:$sa" "Removing original SCC from service account"; then
+                    echo "Successfully removed original SCC from $sa."
+                else
+                    echo "Warning: Failed to remove original SCC $original_scc from service account $sa. Continuing..."
+                fi
             else
-                echo "Warning: Failed to remove original SCC $original_scc from service account $sa. Continuing..."
+                echo "Skipped removal of original SCC from $sa."
             fi
         else
-            echo "Skipped of original SCC from $sa."
+            echo "Original SCC $original_scc is not assigned to service account $sa in the ClusterRoleBinding. No removal needed."
         fi
     else
-        echo "Original SCC $original_scc is not assigned to service account $sa (checked both namespaced and non-namespaced formats). No removal needed."
+        echo "No ClusterRoleBinding found for SCC $original_scc. No removal needed."
     fi
     
     # Confirm before assigning the new SCC
