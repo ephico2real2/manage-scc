@@ -29,11 +29,13 @@ The script solves several common challenges:
 2. Make it executable:
    ```bash
    chmod +x manage-scc.sh
+   chmod +x grant-existing-scc.sh
    ```
 
 ## Basic Usage
 
-The script requires three main parameters:
+### manage-scc.sh
+The main script requires three main parameters:
 - Namespace (`-n`)
 - Service account(s) (`-s`)
 - SCC YAML file (`-f`)
@@ -42,17 +44,33 @@ The script requires three main parameters:
 ./manage-scc.sh -n <namespace> -s <serviceaccount1> [-s <serviceaccount2> ...] -f <scc_yaml_file> [-a] [-d] [-y]
 ```
 
-## Command Line Options
+### grant-existing-scc.sh
+This script allows you to grant existing SCCs to service accounts without creating new namespace-specific SCCs. Use this when you want to grant an existing SCC directly.
 
+```bash
+./grant-existing-scc.sh -n <namespace> -s <serviceaccount> -e <scc_name> [-a] [-y]
+```
+
+Options:
 | Option | Description | Required |
 |--------|-------------|----------|
-| `-n` | Namespace name (e.g., approd, bpprod, bptest) | Yes |
-| `-s` | Service account name(s) - can be specified multiple times | Yes |
-| `-f` | Absolute path to the SCC YAML file | Yes |
-| `-a` | Apply SCCs and assign to service account(s) | No |
-| `-d` | Dry run mode - generate commands without execution | No |
-| `-y` | Skip all confirmation prompts (use with caution) | No |
+| `-n` | Namespace name | Yes |
+| `-s` | Service account name | Yes |
+| `-e` | Existing SCC name to grant | Yes |
+| `-a` | Apply changes (required for making changes) | No |
+| `-y` | Skip all confirmation prompts | No |
 
+Example usage:
+```bash
+# Check what would happen (dry run)
+./grant-existing-scc.sh -n approd -s demo-a -e privileged
+
+# Apply the change
+./grant-existing-scc.sh -n approd -s demo-a -e privileged -a
+
+# Apply without confirmation
+./grant-existing-scc.sh -n approd -s demo-a -e privileged -a -y
+```
 ## Operation Modes
 
 The script can run in several modes:
