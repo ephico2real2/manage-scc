@@ -324,8 +324,11 @@ function manage_existing_sa_scc() {
     
     # Check if ClusterRoleBinding for original SCC exists
     if oc get clusterrolebinding system:openshift:scc:$original_scc &> /dev/null; then
-        # Check if service account is in the ClusterRoleBinding
-        if oc get clusterrolebinding system:openshift:scc:$original_scc -o jsonpath='{.subjects[*]}' | grep -q "name: $sa.*namespace: $ns"; then
+        # Use direct jsonpath query to get all service accounts and their namespaces
+        local binding_output=$(oc get clusterrolebinding system:openshift:scc:$original_scc -o jsonpath='{range .subjects[*]}{"\nServiceAccount: "}{.name}{" in namespace: "}{.namespace}{end}')
+        
+        # Check if our specific service account is in the binding
+        if echo "$binding_output" | grep -q "ServiceAccount: $sa in namespace: $ns"; then
             # Confirm before removing the original SCC
             if confirm_action "Remove original SCC $original_scc from service account $sa?" "Y"; then
                 if execute_with_confirmation "oc adm policy remove-scc-from-user $original_scc system:serviceaccount:$ns:$sa" "Removing original SCC from service account"; then
