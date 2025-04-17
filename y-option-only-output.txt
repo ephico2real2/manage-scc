@@ -1,0 +1,12 @@
+0
+Name:         system:openshift:scc:ibm-sccm-scc-fpprod
+Labels:       <none>
+Annotations:  <none>
+Role:
+  Kind:  ClusterRole
+  Name:  system:openshift:scc:ibm-sccm-scc-fpprod
+Subjects:
+  Kind            Name        Namespace
+  ----            ----        ---------
+  ServiceAccount  demo-sa-01  fpprod
+  ServiceAccount  demo-sa-02  fpprod

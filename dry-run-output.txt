@@ -1,0 +1,136 @@
+Checking OpenShift cluster connection...
+Current cluster: testing (https://api.crc.testing:6443)
+Successfully connected to OpenShift cluster as kubeadmin
+Warning: Service account 'demo-sa-01' does not exist in namespace 'fpprod'.
+Warning: Service account 'demo-sa-02' does not exist in namespace 'fpprod'.
+
+The following service accounts do not exist in namespace 'fpprod':
+  - demo-sa-01
+  - demo-sa-02
+Continuing with missing service accounts. You will need to create them later.
+
+=== Commands to create missing service accounts ===
+oc create serviceaccount demo-sa-01 -n fpprod
+# You can validate with: oc create serviceaccount demo-sa-01 -n fpprod --dry-run=client
+# Cluster: testing
+oc create serviceaccount demo-sa-02 -n fpprod
+# You can validate with: oc create serviceaccount demo-sa-02 -n fpprod --dry-run=client
+# Cluster: testing
+
+Created output directory: ./namespace-specific-sccs
+Detected original SCC name: ibm-sccm-scc
+Creating new SCC file: ./namespace-specific-sccs/ibm-sccm-scc-fpprod.yaml with SCC name: ibm-sccm-scc-fpprod
+Generated SCC file: ./namespace-specific-sccs/ibm-sccm-scc-fpprod.yaml
+
+=== Summary of Operations ===
+Namespace: fpprod
+Service accounts: demo-sa-01 demo-sa-02
+Missing service accounts (need to be created): demo-sa-01 demo-sa-02
+Original SCC: ibm-sccm-scc
+New SCC: ibm-sccm-scc-fpprod
+Generated file: ./namespace-specific-sccs/ibm-sccm-scc-fpprod.yaml
+Target cluster: testing
+
+
+=== GENERATED SCC YAML CONTENT ===
+apiVersion: security.openshift.io/v1
+kind: SecurityContextConstraints
+metadata:
+  name: ibm-sccm-scc-fpprod
+  annotations:
+    kubernetes.io/description: "Security Context Constraint for IBM Security Control Center Manager"
+allowHostDirVolumePlugin: false
+allowHostIPC: false
+allowHostNetwork: false
+allowHostPID: false
+allowHostPorts: false
+allowPrivilegeEscalation: true
+allowPrivilegedContainer: false
+allowedCapabilities:
+  - "NET_BIND_SERVICE"
+  - "CHOWN"
+  - "SETGID"
+  - "SETUID"
+defaultAddCapabilities: []
+fsGroup:
+  type: RunAsAny
+readOnlyRootFilesystem: false
+requiredDropCapabilities:
+  - ALL
+runAsUser:
+  type: MustRunAs
+  uid: 1000
+seLinuxContext:
+  type: MustRunAs
+supplementalGroups:
+  type: RunAsAny
+volumes:
+  - configMap
+  - downwardAPI
+  - emptyDir
+  - persistentVolumeClaim
+  - projected
+  - secret
+priority: 0
+=== Commands to apply the SCC and manage service account permissions ===
+# Apply the new SCC to the cluster
+oc apply -f ./namespace-specific-sccs/ibm-sccm-scc-fpprod.yaml
+# For validation, you can use the dry-run option
+oc apply -f ./namespace-specific-sccs/ibm-sccm-scc-fpprod.yaml --dry-run=client
+# Cluster: testing
+# For service account: demo-sa-01 (does not exist yet, needs to be created)
+oc create serviceaccount demo-sa-01 -n fpprod
+# You can validate with: oc create serviceaccount demo-sa-01 -n fpprod --dry-run=client
+# Assign new namespace-specific SCC to service account (after creation)
+oc adm policy add-scc-to-user ibm-sccm-scc-fpprod system:serviceaccount:fpprod:demo-sa-01
+# You can validate with: oc adm policy add-scc-to-user ibm-sccm-scc-fpprod system:serviceaccount:fpprod:demo-sa-01 --dry-run=client
+# Cluster: testing
+# For service account: demo-sa-02 (does not exist yet, needs to be created)
+oc create serviceaccount demo-sa-02 -n fpprod
+# You can validate with: oc create serviceaccount demo-sa-02 -n fpprod --dry-run=client
+# Assign new namespace-specific SCC to service account (after creation)
+oc adm policy add-scc-to-user ibm-sccm-scc-fpprod system:serviceaccount:fpprod:demo-sa-02
+# You can validate with: oc adm policy add-scc-to-user ibm-sccm-scc-fpprod system:serviceaccount:fpprod:demo-sa-02 --dry-run=client
+# Cluster: testing
+Switching to apply mode...
+Applying SCC ibm-sccm-scc-fpprod to the cluster...
+→ Applying SCC to cluster
+   Command: oc apply -f ./namespace-specific-sccs/ibm-sccm-scc-fpprod.yaml
+   Cluster: testing
+Executing: oc apply -f ./namespace-specific-sccs/ibm-sccm-scc-fpprod.yaml
+securitycontextconstraints.security.openshift.io/ibm-sccm-scc-fpprod unchanged
+SCC ibm-sccm-scc-fpprod applied successfully.
+
+=== Current ServiceAccounts assigned to SCC: ibm-sccm-scc-fpprod ===
+No clusterrolebinding found for this SCC yet. This may be normal for a newly created SCC.
+Service account demo-sa-01 does not exist yet. SCC binding will be set up in advance.
+→ Pre-assigning new SCC to future service account
+   Command: oc adm policy add-scc-to-user ibm-sccm-scc-fpprod system:serviceaccount:fpprod:demo-sa-01
+   Cluster: testing
+Executing: oc adm policy add-scc-to-user ibm-sccm-scc-fpprod system:serviceaccount:fpprod:demo-sa-01
+clusterrole.rbac.authorization.k8s.io/system:openshift:scc:ibm-sccm-scc-fpprod added: "demo-sa-01"
+Successfully pre-assigned new SCC to demo-sa-01. Remember to create this service account later.
+Service account demo-sa-02 does not exist yet. SCC binding will be set up in advance.
+→ Pre-assigning new SCC to future service account
+   Command: oc adm policy add-scc-to-user ibm-sccm-scc-fpprod system:serviceaccount:fpprod:demo-sa-02
+   Cluster: testing
+Executing: oc adm policy add-scc-to-user ibm-sccm-scc-fpprod system:serviceaccount:fpprod:demo-sa-02
+clusterrole.rbac.authorization.k8s.io/system:openshift:scc:ibm-sccm-scc-fpprod added: "demo-sa-02"
+Successfully pre-assigned new SCC to demo-sa-02. Remember to create this service account later.
+
+REMINDER: The following service accounts need to be created:
+  oc create serviceaccount demo-sa-01 -n fpprod
+  # You can validate with: oc create serviceaccount demo-sa-01 -n fpprod --dry-run=client
+  # Cluster: testing
+  oc create serviceaccount demo-sa-02 -n fpprod
+  # You can validate with: oc create serviceaccount demo-sa-02 -n fpprod --dry-run=client
+  # Cluster: testing
+
+The SCC bindings have been created in advance and will take effect once the service accounts exist.
+
+=== Current ServiceAccounts assigned to SCC: ibm-sccm-scc-fpprod ===
+
+ServiceAccount: demo-sa-01 in namespace: fpprod
+ServiceAccount: demo-sa-02 in namespace: fpprod
+
+Operation completed successfully.
