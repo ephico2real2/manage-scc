@@ -8,7 +8,7 @@ This guide explains how to use the OpenShift SCC Management Script to create nam
 
 The script solves several common challenges:
 
-- Creates namespace-specific versions of SCCs (e.g., `ibm-sccm-scc` → `ibm-sccm-scc-demo`)
+- Creates namespace-specific versions of SCCs (e.g., `ibm-sccm-scc` → `ibm-sccm-scc-approd`)
 - Applies these SCCs to your OpenShift cluster
 - Manages service account permissions (removing original SCCs and assigning new ones)
 - Handles non-existent service accounts by pre-configuring permissions
@@ -59,39 +59,44 @@ The script can run in several modes:
 
 1. **Display Mode (Default)**: Shows what would be done, with confirmations
    ```bash
-   ./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml
+   ./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml
    ```
 
 2. **Display Mode (No Confirmations)**: Shows what would be done, without confirmations
    ```bash
-   ./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml -y
+   ./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml -y
    ```
 
 3. **Apply Mode (With Confirmations)**: Applies changes with confirmations
    ```bash
-   ./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml -a
+   ./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml -a
    ```
 
 4. **Fully Automated Mode**: Applies changes without confirmations
    ```bash
-   ./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml -a -y
+   ./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml -a -y
    ```
 
 5. **Dry Run Mode**: Shows exactly what would be done but never applies changes
    ```bash
-   ./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml -d
+   ./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml -d
    ```
 
 ## Detailed Examples
 
-### 1. Dry Run Mode with Demo Namespace
+### 1. Dry Run Mode with approd Namespace
 
 ```bash
-./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml -d
+# Create new project
+oc new-project approd
+```
+
+```bash
+./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml -d
 ```
 
 Dry run mode is perfect for validation before making changes:
-- Generates the namespace-specific SCC file (`ibm-sccm-scc-demo.yaml`)
+- Generates the namespace-specific SCC file (`ibm-sccm-scc-approd.yaml`)
 - Shows all commands that would be executed with their `--dry-run=client` equivalents
 - Displays cluster context information
 - Shows the generated YAML content for verification
@@ -103,36 +108,36 @@ Example output:
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
-  name: ibm-sccm-scc-demo
+  name: ibm-sccm-scc-approd
   ...
 
 === DRY RUN MODE - Commands that would be executed: ===
 # Apply the new SCC to the cluster
-oc apply -f /path/to/namespace-specific-sccs/ibm-sccm-scc-demo.yaml
+oc apply -f /path/to/namespace-specific-sccs/ibm-sccm-scc-approd.yaml
 # For validation, you can use the dry-run option
-oc apply -f /path/to/namespace-specific-sccs/ibm-sccm-scc-demo.yaml --dry-run=client
+oc apply -f /path/to/namespace-specific-sccs/ibm-sccm-scc-approd.yaml --dry-run=client
 # Cluster: my-cluster
 
 # For service account: app-sa
 # Remove original SCC from service account
-oc adm policy remove-scc-from-user ibm-sccm-scc system:serviceaccount:demo:app-sa
-# You can validate with: oc adm policy remove-scc-from-user ibm-sccm-scc system:serviceaccount:demo:app-sa --dry-run=client
+oc adm policy remove-scc-from-user ibm-sccm-scc system:serviceaccount:approd:app-sa
+# You can validate with: oc adm policy remove-scc-from-user ibm-sccm-scc system:serviceaccount:approd:app-sa --dry-run=client
 # Assign new namespace-specific SCC to service account
-oc adm policy add-scc-to-user ibm-sccm-scc-demo system:serviceaccount:demo:app-sa
-# You can validate with: oc adm policy add-scc-to-user ibm-sccm-scc-demo system:serviceaccount:demo:app-sa --dry-run=client
+oc adm policy add-scc-to-user ibm-sccm-scc-approd system:serviceaccount:approd:app-sa
+# You can validate with: oc adm policy add-scc-to-user ibm-sccm-scc-approd system:serviceaccount:approd:app-sa --dry-run=client
 # Cluster: my-cluster
 
 Dry run mode specified. No changes will be applied.
 ```
 
-### 2. Managing Multiple Service Accounts in Demo Namespace
+### 2. Managing Multiple Service Accounts in approd Namespace
 
 ```bash
-./manage-scc.sh -n demo -s app-sa -s db-sa -s monitoring-sa -f /path/to/ibm-sccm-scc.yaml -a
+./manage-scc.sh -n approd -s app-sa -s db-sa -s monitoring-sa -f /path/to/ibm-sccm-scc.yaml -a
 ```
 
 This command:
-- Creates a namespace-specific SCC (`ibm-sccm-scc-demo`)
+- Creates a namespace-specific SCC (`ibm-sccm-scc-approd`)
 - Applies it to the cluster after confirmation
 - Manages SCC assignments for all three service accounts
 - Shows current SCC assignments after applying changes
@@ -159,10 +164,10 @@ This creates three separate namespace-specific SCCs:
 
 Each namespace gets its own SCC with its own permissions, allowing for independent management without conflicts.
 
-### 4. Non-Interactive Dry Run for Demo Namespace
+### 4. Non-Interactive Dry Run for approd Namespace
 
 ```bash
-./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml -d -y
+./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml -d -y
 ```
 
 This combines dry run mode with skipping confirmations:
@@ -182,19 +187,19 @@ The script provides interactive prompts for each major step:
 
 2. **Applying to Cluster**:
    ```
-   Apply SCC ibm-sccm-scc-demo to the cluster? [Y/n]:
+   Apply SCC ibm-sccm-scc-approd to the cluster? [Y/n]:
    ```
 
 3. **Managing Service Account Permissions**:
    ```
    Remove original SCC ibm-sccm-scc from service account app-sa? [Y/n]:
-   Assign new SCC ibm-sccm-scc-demo to service account app-sa? [Y/n]:
+   Assign new SCC ibm-sccm-scc-approd to service account app-sa? [Y/n]:
    ```
 
 4. **Command Execution**:
    ```
    → Applying SCC to cluster
-     Command: oc apply -f /path/to/ibm-sccm-scc-demo.yaml
+     Command: oc apply -f /path/to/ibm-sccm-scc-approd.yaml
      Cluster: my-cluster
    Execute this command? [Y/n]:
    ```
@@ -204,7 +209,7 @@ The script provides interactive prompts for each major step:
 When working with service accounts that don't exist yet:
 
 ```bash
-./manage-scc.sh -n demo -s future-sa -f /path/to/ibm-sccm-scc.yaml -a
+./manage-scc.sh -n approd -s future-sa -f /path/to/ibm-sccm-scc.yaml -a
 ```
 
 The script will:
@@ -216,8 +221,8 @@ The script will:
 
 ```
 REMINDER: The following service accounts need to be created:
-  oc create serviceaccount future-sa -n demo
-  # You can validate with: oc create serviceaccount future-sa -n demo --dry-run=client
+  oc create serviceaccount future-sa -n approd
+  # You can validate with: oc create serviceaccount future-sa -n approd --dry-run=client
   # Cluster: my-cluster
 
 The SCC bindings have been created in advance and will take effect once the service accounts exist.
@@ -240,9 +245,9 @@ Successfully connected to OpenShift cluster as admin
 After applying changes, the script shows the service accounts assigned to the new SCC:
 
 ```
-=== Current ServiceAccounts assigned to SCC: ibm-sccm-scc-demo ===
-ServiceAccount: app-sa in namespace: demo
-ServiceAccount: db-sa in namespace: demo
+=== Current ServiceAccounts assigned to SCC: ibm-sccm-scc-approd ===
+ServiceAccount: app-sa in namespace: approd
+ServiceAccount: db-sa in namespace: approd
 ```
 
 ### Operation Mode Indicator
@@ -272,21 +277,21 @@ For each operation, the script shows how to validate it using the `--dry-run=cli
 
 2. **Start with Dry Run**: Always use `-d` flag first to validate changes before applying them.
    ```bash
-   ./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml -d
+   ./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml -d
    ```
 
 3. **Consistent Naming**: Use consistent namespace naming conventions across environments (e.g., `approd`, `bpprod`, `bptest`).
 
 4. **Multiple Service Accounts**: Include all service accounts that need the same SCC in a single command.
    ```bash
-   ./manage-scc.sh -n demo -s app-sa -s db-sa -s monitoring-sa -f /path/to/ibm-sccm-scc.yaml -a
+   ./manage-scc.sh -n approd -s app-sa -s db-sa -s monitoring-sa -f /path/to/ibm-sccm-scc.yaml -a
    ```
 
 5. **Pre-Configure for CI/CD**: For new deployments, create SCCs and pre-configure permissions before creating service accounts.
 
 6. **Automation**: Use the `-y` flag for CI/CD pipelines to skip interactive prompts.
    ```bash
-   ./manage-scc.sh -n demo -s app-sa -f /path/to/ibm-sccm-scc.yaml -a -y
+   ./manage-scc.sh -n approd -s app-sa -f /path/to/ibm-sccm-scc.yaml -a -y
    ```
 
 ## Troubleshooting
